@@ -50,6 +50,13 @@ contract CCQueryUC is UniversalChanIbcApp {
         // 3. Call the IbcUniversalPacketSender to send the packet
 
         // Example of how to properly encode, set timestamp and send a packet can be found in XCounterUC.sol
+        bytes memory payload = abi.encode(msg.sender, "crossChainQuery");
+
+        uint64 timeoutTimestamp = uint64((block.timestamp + timeoutSeconds) * 1000000000);
+        
+        IbcUniversalPacketSender(mw).sendUniversalPacket(
+            channelId, IbcUtils.toBytes32(destPortAddr), payload, timeoutTimestamp
+        );
     }
 
     /**
@@ -115,6 +122,12 @@ contract CCQueryUC is UniversalChanIbcApp {
         // 2. Emit a LogAcknowledgement event with the message
 
         // An example of how to properly decode and handle an ack packet can be found in XCounterUC.sol
+        ackPackets.push(UcAckWithChannel(channelId, packet, ack));
+        
+        // decode the counter from the ack packet
+        (string memory _secretMessage) = abi.decode(ack.data, (string));
+        
+        emit LogAcknowledgement(_secretMessage);
     }
 
     /**
